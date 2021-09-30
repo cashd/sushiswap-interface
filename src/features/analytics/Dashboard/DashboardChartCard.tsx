@@ -1,21 +1,34 @@
+import ChartCard from '../ChartCard'
+import { ChainId } from '@sushiswap/sdk'
+import { calculatePercentChange, getNumFromChartTimespan } from '../utils'
 import { useBlock, useDayData, useFactory } from '../../../services/graph'
 import { useMemo, useState } from 'react'
-import ChartCard from '../ChartCard'
-import { useActiveWeb3React } from '../../../hooks'
+
+type DashboardChartType = 'liquidity' | 'volume'
 
 interface DashboardChartCardProps {
-  type: 'liquidity' | 'volume'
+  type: DashboardChartType
+  chainId: ChainId
 }
 
-const types = {
+interface ChartData {
+  figure: number
+  change: number
+  chart: { x: number; y: number }[]
+}
+
+interface Data {
+  header: string
+  getData: (exchange, exchange1d, exchange2d, dayData) => ChartData
+}
+
+const types: Record<DashboardChartType, Data> = {
   liquidity: {
     header: 'TVL',
     getData: (exchange, exchange1d, exchange2d, dayData) => ({
-      figure: exchange ? exchange.liquidityUSD : 0,
-      change: exchange1d && exchange2d ? (exchange1d.liquidityUSD / exchange2d.liquidityUSD) * 100 - 100 : 0,
-      chart: dayData
-        ? dayData.sort((a, b) => a.date - b.date).map((day, i) => ({ x: i, y: Number(day.liquidityUSD) }))
-        : undefined,
+      figure: exchange?.liquidityUSD ?? 0,
+      change: calculatePercentChange(exchange1d?.liquidityUSD ?? 0, exchange2d?.liquidityUSD ?? 0),
+      chart: dayData?.sort((a, b) => a.date - b.date).map((day, i) => ({ x: i, y: Number(day.liquidityUSD) })) ?? [],
     }),
   },
   volume: {
@@ -26,20 +39,16 @@ const types = {
         exchange && exchange1d && exchange2d
           ? ((exchange.volumeUSD - exchange1d.volumeUSD) / (exchange1d.volumeUSD - exchange2d.volumeUSD)) * 100 - 100
           : 0,
-      chart: dayData
-        ? dayData.sort((a, b) => a.date - b.date).map((day, i) => ({ x: i, y: Number(day.volumeUSD) }))
-        : undefined,
+      chart: dayData?.sort((a, b) => a.date - b.date).map((day, i) => ({ x: i, y: Number(day.volumeUSD) })) ?? [],
     }),
   },
 }
 
-export default function DashboardChartCard(props: DashboardChartCardProps): JSX.Element {
+const chartTimespans = ['1W', '1M', '1Y', 'ALL']
+export default function DashboardChartCard({ type: t, chainId }: DashboardChartCardProps): JSX.Element {
   const [chartTimespan, setChartTimespan] = useState('1M')
-  const chartTimespans = ['1W', '1M', '1Y', 'ALL']
 
-  const { chainId } = useActiveWeb3React()
-
-  const type = types[props.type]
+  const type = types[t]
 
   const block1d = useBlock({ daysAgo: 1, chainId })
   const block2d = useBlock({ daysAgo: 2, chainId })
@@ -49,7 +58,7 @@ export default function DashboardChartCard(props: DashboardChartCardProps): JSX.
   const exchange2d = useFactory({ block: block2d, chainId })
 
   const dayData = useDayData({
-    first: chartTimespan === '1W' ? 7 : chartTimespan === '1M' ? 30 : chartTimespan === '1Y' ? 365 : undefined,
+    first: getNumFromChartTimespan(chartTimespan),
     chainId,
   })
 
@@ -61,10 +70,10 @@ export default function DashboardChartCard(props: DashboardChartCardProps): JSX.
   return (
     <ChartCard
       header={type.header}
-      subheader={'SUSHI AMM'}
+      subheader="SUSHI AMM"
       figure={data.figure}
       change={data.change}
-      chart={data.chart}
+      data={data.chart}
       currentTimespan={chartTimespan}
       timespans={chartTimespans}
       setTimespan={setChartTimespan}

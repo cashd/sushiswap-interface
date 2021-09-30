@@ -169,5 +169,8 @@
     "not ie 11",
     "not dead",
     "not op_mini all"
-  ]
+  ],
+  "dependencies": {
+    "ts-pattern": "^3.3.3"
+  }
 }

@@ -1,13 +1,15 @@
-import { classNames, formatNumber } from '../../functions'
 import ColoredNumber from './ColoredNumber'
 import LineGraph from '../../components/LineGraph'
+import { classNames, formatNumber } from '../../functions'
+
+type Coordinate = { x: number; y: number }
 
 interface ChartCardProps {
   header: string
   subheader: string
   figure: number
   change: number
-  chart: any
+  data: Coordinate[]
   currentTimespan: string
   timespans: string[]
   setTimespan: Function
@@ -18,7 +20,7 @@ export default function ChartCard({
   subheader,
   figure,
   change,
-  chart,
+  data,
   currentTimespan,
   timespans,
   setTimespan,
@@ -39,7 +41,7 @@ export default function ChartCard({
         </div>
       </div>
       <div className="py-8 h-36">
-        {chart && <LineGraph data={chart} stroke={{ gradient: { from: '#27B0E6', to: '#FA52A0' } }} strokeWidth={1} />}
+        {data && <LineGraph data={data} stroke={{ gradient: { from: '#27B0E6', to: '#FA52A0' } }} strokeWidth={1} />}
       </div>
       <div className="flex flex-row justify-end space-x-4">
         {timespans.map((timespan, i) => (

@@ -170,8 +170,8 @@ export default function Dashboard(): JSX.Element {
       <div className="py-6 space-y-4 px-14">
         <div className="text-2xl font-bold text-high-emphesis">Overview</div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <DashboardChartCard type="liquidity" />
-          <DashboardChartCard type="volume" />
+          <DashboardChartCard type="liquidity" chainId={chainId} />
+          <DashboardChartCard type="volume" chainId={chainId} />
         </div>
       </div>
       <DashboardTabs currentType={type} setType={setType} />
