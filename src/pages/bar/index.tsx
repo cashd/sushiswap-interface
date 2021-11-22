@@ -1,6 +1,6 @@
 import { ApprovalState, useApproveCallback } from '../../hooks/useApproveCallback'
 import { BAR_ADDRESS, ZERO } from '@sushiswap/sdk'
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { SUSHI, XSUSHI } from '../../config/tokens'
 
 import Button from '../../components/Button'
@@ -12,7 +12,6 @@ import Image from 'next/image'
 import Input from '../../components/Input'
 import TransactionFailedModal from '../../modals/TransactionFailedModal'
 import { request } from 'graphql-request'
-import sushiData from '@sushiswap/sushi-data'
 import { t } from '@lingui/macro'
 import { tryParseAmount } from '../../functions/parse'
 import useActiveWeb3React from '../../hooks/useActiveWeb3React'
@@ -23,6 +22,7 @@ import { useSushiPrice } from '../../services/graph'
 import { useTokenBalance } from '../../state/wallet/hooks'
 import { useWalletModalToggle } from '../../state/application/hooks'
 import { classNames } from '../../functions'
+import { useYesterdayBarApr } from '../../services/graph/hooks/bar'
 
 const INPUT_CHAR_LIMIT = 18
 
@@ -60,6 +60,9 @@ export default function Stake() {
   const xSushiBalance = useTokenBalance(account ?? undefined, XSUSHI)
 
   const sushiPrice = useSushiPrice()
+
+  const apr = useYesterdayBarApr()
+  console.log(apr, sushiPrice)
 
   const { enter, leave } = useSushiBar()
 
@@ -117,21 +120,18 @@ export default function Stake() {
           const success = await sendTx(() => approve())
           if (!success) {
             setPendingTx(false)
-            // setModalOpen(true)
             return
           }
         }
         const success = await sendTx(() => enter(parsedAmount))
         if (!success) {
           setPendingTx(false)
-          // setModalOpen(true)
           return
         }
       } else if (activeTab === 1) {
         const success = await sendTx(() => leave(parsedAmount))
         if (!success) {
           setPendingTx(false)
-          // setModalOpen(true)
           return
         }
       }
@@ -140,19 +140,6 @@ export default function Stake() {
       setPendingTx(false)
     }
   }
-
-  const [apr, setApr] = useState<any>()
-
-  // TODO: DROP AND USE SWR HOOKS INSTEAD
-  useEffect(() => {
-    const fetchData = async () => {
-      const results = await sushiData.exchange.dayData()
-      const apr = (((results[1].volumeUSD * 0.05) / data?.bar?.totalSupply) * 365) / (data?.bar?.ratio * sushiPrice)
-
-      setApr(apr)
-    }
-    fetchData()
-  }, [data?.bar?.ratio, data?.bar?.totalSupply, sushiPrice])
 
   return (
     <Container id="bar-page" className="py-4 md:py-8 lg:py-12" maxWidth="full">
@@ -187,9 +174,6 @@ export default function Stake() {
               <div className="self-end mb-3 text-lg font-bold md:text-2xl text-high-emphesis md:mb-7">
                 {i18n._(t`Maximize yield by staking SUSHI for xSUSHI`)}
               </div>
-              {/* <div className="self-start pl-6 pr-3 mb-1 min-w-max md:hidden">
-                                <img src={XSushiSignSmall} alt="xsushi sign" />
-                            </div> */}
             </div>
             <div className="max-w-lg pr-3 mb-2 text-sm leading-5 text-gray-500 md:text-base md:mb-4 md:pr-0">
               {i18n._(t`For every swap on the exchange on every chain, 0.05% of the swap fees are distributed as SUSHI
@@ -198,18 +182,6 @@ export default function Stake() {
                                 Your xSUSHI is continuously compounding, when you unstake you will receive all the originally deposited
                                 SUSHI and any additional from fees.`)}
             </div>
-            {/* <div className="flex">
-                            <div className="mr-14 md:mr-9">
-                                <StyledLink className="text-sm text-lg whitespace-nowrap md:text-lg md:leading-5">
-                                    Enter the Kitchen
-                                </StyledLink>
-                            </div>
-                            <div>
-                                <StyledLink className="text-sm text-lg whitespace-nowrap md:text-lg md:leading-5">
-                                    Tips for using xSUSHI
-                                </StyledLink>
-                            </div>
-                        </div> */}
           </div>
           <div className="hidden px-8 ml-6 md:block w-72">
             <Image src="/xsushi-sign.png" alt="xSUSHI sign" width="100%" height="100%" layout="responsive" />
@@ -224,7 +196,6 @@ export default function Stake() {
                     <p className="text-sm font-bold whitespace-nowrap md:text-lg md:leading-5 text-high-emphesis">
                       {i18n._(t`Staking APR`)}{' '}
                     </p>
-                    {/* <img className="ml-3 cursor-pointer" src={MoreInfoSymbol} alt={'more info'} /> */}
                   </div>
                   <div className="flex">
                     <a
@@ -405,7 +376,6 @@ export default function Stake() {
                     <p className="text-lg font-bold md:text-2xl md:font-medium text-high-emphesis">
                       {i18n._(t`Unstaked`)}
                     </p>
-                    {/* <img className="w-4 ml-2 cursor-pointer" src={MoreInfoSymbol} alt={'more info'} /> */}
                   </div>
                   <div className="flex items-center ml-8 space-x-4 md:ml-0">
                     <Image
@@ -425,15 +395,6 @@ export default function Stake() {
                 </div>
 
                 <div className="flex flex-col w-full mb-4 mt-7 md:mb-0">
-                  {/* <div className="flex items-center justify-between">
-                        <div className="flex items-center flex-1 flex-nowrap">
-                            <p className="text-base font-bold md:text-lg text-high-emphesis">Weighted APR</p>
-                            <img className="w-4 ml-2 cursor-pointer" src={MoreInfoSymbol} alt={'more info'} />
-                        </div>
-                        <div className="flex flex-1 md:flex-initial">
-                            <p className="ml-5 text-base text-primary md:ml-0">{`${weightedApr}%`}</p>
-                        </div>
-                    </div> */}
                   {account && (
                     <a
                       href={`https://analytics.sushi.com/users/${account}`}
