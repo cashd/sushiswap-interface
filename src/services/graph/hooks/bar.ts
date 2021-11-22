@@ -5,7 +5,7 @@ import { getBar, getBarHistory } from '../fetchers/bar'
 import { useBlock } from './blocks'
 
 interface useBarProps {
-  timestamp?: numBber
+  timestamp?: number
   block?: number
   shouldFetch?: boolean
 }
